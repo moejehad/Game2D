@@ -9,9 +9,12 @@ public class PlayerMovement : MonoBehaviour
     private BoxCollider2D coll;
     private Animator anim;
     [SerializeField] private LayerMask jumpableGround;
-    private float dirX = 0f;
     private float moveSpeed = 5f;
     private float jumpForce = 6f;
+    private float horizontalMove;
+    private bool moveRight;
+    private bool moveLeft;
+    private bool jump;
 
     private enum MovementState { idle, running, jumping}
     private void Start()
@@ -20,40 +23,66 @@ public class PlayerMovement : MonoBehaviour
         coll = GetComponent<BoxCollider2D>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
+
+        moveLeft = false;
+        moveRight = false;
+        jump = false;
     }
 
-    
     private void Update()
     {
-        dirX = Input.GetAxis("Horizontal");
-        rb.velocity = new Vector2(dirX * moveSpeed, rb.velocity.y);
-
-        if(Input.GetKey("left shift") && IsGrounded()){
-            rb.velocity = new Vector3(rb.velocity.x,jumpForce,0);
-        }
-
-        UpdateAnimationState();
+        Movement();
+        rb.velocity = new Vector2(horizontalMove,rb.velocity.y);
 
     }
 
-private void UpdateAnimationState(){
+    public void pointerDownLeft(){
+        moveLeft = true;
+    }
 
-        MovementState state;
-        if(dirX > 0f){
-            state = MovementState.running;
-            sprite.flipX = false;
-        }else if(dirX < 0f){
-            state = MovementState.running;
-            sprite.flipX = true;
-        }else {
-            state = MovementState.idle;
-        }
+    public void pointerUpLeft(){
+        moveLeft = false;
+    }
 
-        if(rb.velocity.y > .1f){
-            state = MovementState.jumping;
-        }else if(rb.velocity.y < -.1f) {
-            state = MovementState.jumping;
-        }
+    public void pointerDownRight(){
+        moveRight = true;
+    }
+
+    public void pointerUpRight(){
+        moveRight = false;
+    } 
+
+    public void pointerDownJump(){
+        jump = true;
+    }
+
+    public void pointerUpJump(){
+        jump = false;
+    } 
+    
+
+    private void Movement(){
+
+            MovementState state;
+            if(moveLeft){
+                horizontalMove = -moveSpeed;
+                state = MovementState.running;
+                sprite.flipX = true;
+            }else if(moveRight){
+                horizontalMove = moveSpeed;
+                state = MovementState.running;
+                sprite.flipX = false;
+            }else {
+                horizontalMove = 0;
+                state = MovementState.idle;
+            }
+
+            if(jump && IsGrounded()){
+                rb.velocity = new Vector3(rb.velocity.x,jumpForce,0);
+                state = MovementState.jumping;
+            }else if(jump) {
+                state = MovementState.jumping;
+            }
         
         anim.SetInteger("state", (int)state);
     }
